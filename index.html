@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบรายการยาโรงพยาบาลสวรรคโลก</title>
+    <title>ระบบรายการยาโรงพยาบาล</title>
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -38,7 +38,6 @@
                     <table class="w-full text-left">
                         <thead class="bg-gray-200 sticky-header">
                             <tr>
-                                <th class="p-4 font-bold text-gray-600">รหัสยา</th>
                                 <th class="p-4 font-bold text-gray-600">ชื่อสามัญ</th>
                                 <th class="p-4 font-bold text-gray-600">ชื่อการค้า</th>
                                 <th class="p-4 font-bold text-gray-600">รูปแบบยา</th>
@@ -122,7 +121,6 @@
               <input type="text" id="genericName" placeholder="ชื่อสามัญ" class="mb-3 mt-2 px-3 py-2 text-gray-700 bg-gray-100 rounded text-sm focus:outline-none w-full" required>
               <input type="text" id="tradeName" placeholder="ชื่อการค้า" class="mb-3 px-3 py-2 text-gray-700 bg-gray-100 rounded text-sm focus:outline-none w-full">
               
-              <!-- *** UPDATED: Drug Form Dropdown *** -->
               <div class="mb-3">
                   <label for="formSelect" class="block text-sm font-medium text-gray-700 text-left mb-1">รูปแบบยา</label>
                   <select id="formSelect" class="w-full px-3 py-2 text-gray-700 bg-gray-100 rounded text-sm focus:outline-none" required></select>
@@ -180,46 +178,48 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
 
-        let medicineData = [
-            { id: '1001', generic: 'Paracetamol', trade: 'Tylenol', form: 'เม็ด (Tablet)', max: 200 },
-            { id: '1002', generic: 'Ibuprofen', trade: 'Brufen', form: 'เม็ด (Tablet)', max: 150 },
-            { id: '1003', generic: 'Amoxicillin', trade: 'Amoxil', form: 'แคปซูล (Capsule)', max: null },
-            { id: '1004', generic: 'Salbutamol', trade: 'Ventolin', form: 'ยาพ่น (Inhaler)', max: 2 },
-        ];
-        let drugForms = [
-            'เม็ด (Tablet)',
-            'แคปซูล (Capsule)',
-            'ยาพ่น (Inhaler)',
-            'ยาน้ำ (Syrup)',
-            'ยาฉีด (Injection)'
-        ];
-        let ADMIN_PASSWORD = 'admin1234';
+        const STORAGE_KEY = 'hospitalDrugAppData';
+
+        // --- Data State ---
+        let medicineData = [];
+        let drugForms = [];
+        let ADMIN_PASSWORD = '';
         let currentEditId = null;
 
-        // Page elements
+        // --- Default Data ---
+        const defaultData = {
+            medicines: [
+                { id: '670001', generic: 'Paracetamol', trade: 'Tylenol', form: 'เม็ด (Tablet)', max: 200 },
+                { id: '670002', generic: 'Ibuprofen', trade: 'Brufen', form: 'เม็ด (Tablet)', max: 150 },
+                { id: '670003', generic: 'Amoxicillin', trade: 'Amoxil', form: 'แคปซูล (Capsule)', max: null },
+                { id: '670004', generic: 'Salbutamol', trade: 'Ventolin', form: 'ยาพ่น (Inhaler)', max: 2 },
+            ],
+            forms: [
+                'เม็ด (Tablet)',
+                'แคปซูล (Capsule)',
+                'ยาพ่น (Inhaler)',
+                'ยาน้ำ (Syrup)',
+                'ยาฉีด (Injection)'
+            ],
+            password: 'admin1234'
+        };
+
+        // --- DOM Elements ---
         const publicPage = document.getElementById('public-page');
         const loginPage = document.getElementById('login-page');
         const adminPage = document.getElementById('admin-page');
-        
-        // Public page elements
         const publicTableBody = document.getElementById('publicTableBody');
         const publicSearchInput = document.getElementById('publicSearchInput');
         const goToLoginBtn = document.getElementById('goToLoginBtn');
-
-        // Login page elements
         const passwordInput = document.getElementById('passwordInput');
         const passwordError = document.getElementById('passwordError');
         const cancelLoginBtn = document.getElementById('cancelLoginBtn');
         const submitPasswordBtn = document.getElementById('submitPasswordBtn');
-
-        // Admin page elements
         const adminTableBody = document.getElementById('adminTableBody');
         const adminSearchInput = document.getElementById('adminSearchInput');
         const addDrugBtn = document.getElementById('addDrugBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const changePasswordBtn = document.getElementById('changePasswordBtn');
-
-        // Drug Modal elements
         const drugModal = document.getElementById('drugModal');
         const modalTitle = document.getElementById('modalTitle');
         const drugForm = document.getElementById('drugForm');
@@ -229,14 +229,37 @@
         const formSelect = document.getElementById('formSelect');
         const newFormContainer = document.getElementById('newFormContainer');
         const newFormInput = document.getElementById('newFormInput');
-
-        // Change Password Modal elements
         const changePasswordModal = document.getElementById('changePasswordModal');
         const changePasswordForm = document.getElementById('changePasswordForm');
         const closeChangePasswordModalBtn = document.getElementById('closeChangePasswordModalBtn');
         const oldPasswordInput = document.getElementById('oldPassword');
         const newPasswordInput = document.getElementById('newPassword');
         const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
+        
+        // --- Data Persistence Functions ---
+        const saveData = () => {
+            const dataToSave = {
+                medicines: medicineData,
+                forms: drugForms,
+                password: ADMIN_PASSWORD
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        };
+
+        const loadData = () => {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                const parsedData = JSON.parse(savedData);
+                medicineData = parsedData.medicines;
+                drugForms = parsedData.forms;
+                ADMIN_PASSWORD = parsedData.password;
+            } else {
+                medicineData = defaultData.medicines;
+                drugForms = defaultData.forms;
+                ADMIN_PASSWORD = defaultData.password;
+                saveData();
+            }
+        };
 
         // --- Page Navigation ---
         const showPage = (pageId) => {
@@ -251,7 +274,7 @@
             const searchTerm = publicSearchInput.value.toLowerCase().trim();
             const filteredData = medicineData.filter(med => 
                 med.generic.toLowerCase().includes(searchTerm) ||
-                med.trade.toLowerCase().includes(searchTerm) ||
+                (med.trade && med.trade.toLowerCase().includes(searchTerm)) ||
                 med.id.includes(searchTerm)
             );
             publicTableBody.innerHTML = '';
@@ -262,9 +285,8 @@
                     ? `<span class="text-green-600 font-bold">ไม่จำกัด</span>`
                     : `<span class="font-bold text-red-600">${Number(med.max).toLocaleString()}</span>`;
                 row.innerHTML = `
-                    <td class="p-4">${med.id}</td>
                     <td class="p-4 font-semibold">${med.generic}</td>
-                    <td class="p-4">${med.trade}</td>
+                    <td class="p-4">${med.trade || '-'}</td>
                     <td class="p-4">${med.form}</td>
                     <td class="p-4 text-center text-lg">${maxDisplay}</td>
                 `;
@@ -276,7 +298,7 @@
             const searchTerm = adminSearchInput.value.toLowerCase().trim();
             const filteredData = medicineData.filter(med => 
                 med.generic.toLowerCase().includes(searchTerm) ||
-                med.trade.toLowerCase().includes(searchTerm) ||
+                (med.trade && med.trade.toLowerCase().includes(searchTerm)) ||
                 med.id.includes(searchTerm)
             );
             adminTableBody.innerHTML = '';
@@ -289,7 +311,7 @@
                 row.innerHTML = `
                     <td class="p-4">${med.id}</td>
                     <td class="p-4 font-semibold">${med.generic}</td>
-                    <td class="p-4">${med.trade}</td>
+                    <td class="p-4">${med.trade || '-'}</td>
                     <td class="p-4">${med.form}</td>
                     <td class="p-4 text-center text-lg">${maxDisplay}</td>
                     <td class="p-4 text-center">
@@ -302,7 +324,7 @@
         };
         
         const populateFormDropdown = () => {
-            formSelect.innerHTML = ''; // Clear existing options
+            formSelect.innerHTML = '';
             drugForms.forEach(form => {
                 const option = document.createElement('option');
                 option.value = form;
@@ -331,7 +353,6 @@
                 if (drug) {
                     document.getElementById('genericName').value = drug.generic;
                     document.getElementById('tradeName').value = drug.trade;
-                    
                     if (drugForms.includes(drug.form)) {
                         formSelect.value = drug.form;
                     } else {
@@ -341,7 +362,6 @@
                         formSelect.insertBefore(newOption, formSelect.querySelector('option[value="add_new"]'));
                         formSelect.value = drug.form;
                     }
-
                     if (drug.max === null) {
                         unlimitedCheckbox.checked = true;
                         maxInput.disabled = true;
@@ -373,7 +393,6 @@
             } else {
                 formValue = formSelect.value;
             }
-
             const isUnlimited = unlimitedCheckbox.checked;
             const max = isUnlimited ? null : parseInt(maxInput.value, 10);
             
@@ -385,8 +404,22 @@
                 const drugIndex = medicineData.findIndex(d => d.id === currentEditId);
                 if (drugIndex > -1) medicineData[drugIndex] = { ...medicineData[drugIndex], generic, trade: document.getElementById('tradeName').value.trim(), form: formValue, max };
             } else {
-                medicineData.push({ id: String(Date.now()), generic, trade: document.getElementById('tradeName').value.trim(), form: formValue, max });
+                // *** NEW: Auto-generate Drug ID ***
+                const beYear = new Date().getFullYear() + 543;
+                const yearPrefix = String(beYear).slice(-2);
+                
+                const drugsThisYear = medicineData.filter(med => med.id.startsWith(yearPrefix));
+                let nextRunningNumber = 1;
+                if (drugsThisYear.length > 0) {
+                    const runningNumbers = drugsThisYear.map(med => parseInt(med.id.slice(2), 10));
+                    nextRunningNumber = Math.max(...runningNumbers) + 1;
+                }
+                
+                const newId = `${yearPrefix}${String(nextRunningNumber).padStart(4, '0')}`;
+                
+                medicineData.push({ id: newId, generic, trade: document.getElementById('tradeName').value.trim(), form: formValue, max });
             }
+            saveData();
             hideDrugModal();
             renderAdminTable();
         };
@@ -399,6 +432,7 @@
             if (target.classList.contains('delete-btn')) {
                 if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบยา ID: ${drugId}?`)) {
                     medicineData = medicineData.filter(d => d.id !== drugId);
+                    saveData();
                     renderAdminTable();
                 }
             } else if (target.classList.contains('edit-btn')) {
@@ -420,18 +454,22 @@
                 alert("รหัสผ่านใหม่และการยืนยันไม่ตรงกัน!");
                 return;
             }
+            if (newPass.length < 4) {
+                alert("รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร!");
+                return;
+            }
             if (newPass === oldPass) {
                 alert("รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเก่า!");
                 return;
             }
 
             ADMIN_PASSWORD = newPass;
+            saveData();
             alert("เปลี่ยนรหัสผ่านสำเร็จแล้ว!");
             hideChangePasswordModal();
         };
 
         // --- Event Listeners Setup ---
-        // Navigation
         goToLoginBtn.addEventListener('click', () => showPage('login-page'));
         cancelLoginBtn.addEventListener('click', () => showPage('public-page'));
         logoutBtn.addEventListener('click', () => {
@@ -439,7 +477,6 @@
             showPage('public-page');
         });
 
-        // Login
         submitPasswordBtn.addEventListener('click', () => {
             if (passwordInput.value === ADMIN_PASSWORD) {
                 passwordInput.value = '';
@@ -456,18 +493,15 @@
             passwordError.textContent = '';
         });
 
-        // Search
         publicSearchInput.addEventListener('input', renderPublicTable);
         adminSearchInput.addEventListener('input', renderAdminTable);
 
-        // Admin Actions
         addDrugBtn.addEventListener('click', () => showDrugModal('add'));
         adminTableBody.addEventListener('click', handleAdminTableClick);
         changePasswordBtn.addEventListener('click', () => {
             changePasswordModal.classList.remove('hidden');
         });
         
-        // Modal Actions
         closeDrugModalBtn.addEventListener('click', hideDrugModal);
         drugForm.addEventListener('submit', handleFormSubmit);
         unlimitedCheckbox.addEventListener('change', () => {
@@ -476,18 +510,14 @@
             if (unlimitedCheckbox.checked) maxInput.value = '';
         });
         formSelect.addEventListener('change', () => {
-            if (formSelect.value === 'add_new') {
-                newFormContainer.classList.remove('hidden');
-                newFormInput.required = true;
-            } else {
-                newFormContainer.classList.add('hidden');
-                newFormInput.required = false;
-            }
+            newFormContainer.classList.toggle('hidden', formSelect.value !== 'add_new');
+            newFormInput.required = formSelect.value === 'add_new';
         });
         closeChangePasswordModalBtn.addEventListener('click', hideChangePasswordModal);
         changePasswordForm.addEventListener('submit', handleChangePasswordSubmit);
 
         // --- Initial Load ---
+        loadData();
         renderPublicTable();
         showPage('public-page');
 
