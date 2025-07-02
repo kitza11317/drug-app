@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบรายการยาโรงพยาบาล</title>
+    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Using a nice Google Font for Thai language */
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
-        body { font-family: 'Sarabun', sans-serif; }
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
         .sticky-header th { position: sticky; top: 0; z-index: 10; }
         .modal { transition: opacity 0.25s ease; }
     </style>
@@ -23,12 +27,18 @@
                 <h1 class="text-3xl sm:text-4xl font-bold text-blue-600">รายการยาในโรงพยาบาล</h1>
                 <p class="text-gray-500 mt-2">ค้นหารายการยาและตรวจสอบจำนวนสูงสุดที่สามารถสั่งได้</p>
             </header>
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                 <input type="text" id="publicSearchInput" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm" placeholder="ค้นหาด้วยชื่อสามัญ, ชื่อการค้า, หรือรหัสยา...">
+                <!-- *** NEW: Status Filter for Public *** -->
+                <select id="publicStatusFilter" class="w-full sm:w-auto p-3 border border-gray-300 rounded-lg shadow-sm">
+                    <option value="all">แสดงทุกสถานะ</option>
+                    <option value="พร้อมใช้">พร้อมใช้</option>
+                    <option value="ยาขาดคราว">ยาขาดคราว</option>
+                </select>
                 <button id="goToLoginBtn" class="ml-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg whitespace-nowrap">สำหรับเจ้าหน้าที่</button>
             </div>
             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-200 sticky-header"><tr><th class="p-4 font-bold text-gray-600">ชื่อสามัญ</th><th class="p-4 font-bold text-gray-600">ชื่อการค้า</th><th class="p-4 font-bold text-gray-600">รูปแบบยา</th><th class="p-4 font-bold text-gray-600 text-center">จำนวนสูงสุด</th></tr></thead><tbody id="publicTableBody"></tbody></table></div>
+                <div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-200 sticky-header"><tr><th class="p-4 font-bold text-gray-600">ชื่อสามัญ</th><th class="p-4 font-bold text-gray-600">ชื่อการค้า</th><th class="p-4 font-bold text-gray-600">รูปแบบยา</th><th class="p-4 font-bold text-gray-600 text-center">สถานะ</th><th class="p-4 font-bold text-gray-600 text-center">จำนวนสูงสุด</th></tr></thead><tbody id="publicTableBody"></tbody></table></div>
             </div>
         </div>
     </div>
@@ -63,11 +73,17 @@
                 <div class="flex gap-2"><button id="changePasswordBtn" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-lg">เปลี่ยนรหัสผ่าน</button><button id="logoutBtn" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg">ออกจากระบบ</button></div>
             </header>
             <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                <input type="text" id="adminSearchInput" class="w-full sm:w-2/3 p-3 border border-gray-300 rounded-lg" placeholder="ค้นหาข้อมูลยา...">
+                <input type="text" id="adminSearchInput" class="w-full sm:w-auto flex-grow p-3 border border-gray-300 rounded-lg" placeholder="ค้นหาข้อมูลยา...">
+                <!-- *** NEW: Status Filter for Admin *** -->
+                <select id="adminStatusFilter" class="w-full sm:w-auto p-3 border border-gray-300 rounded-lg shadow-sm">
+                    <option value="all">แสดงทุกสถานะ</option>
+                    <option value="พร้อมใช้">พร้อมใช้</option>
+                    <option value="ยาขาดคราว">ยาขาดคราว</option>
+                </select>
                 <button id="addDrugBtn" class="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-5 rounded-lg">เพิ่มยาใหม่</button>
             </div>
             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-200 sticky-header"><tr><th class="p-4 font-bold text-gray-600">รหัสยา</th><th class="p-4 font-bold text-gray-600">ชื่อสามัญ</th><th class="p-4 font-bold text-gray-600">ชื่อการค้า</th><th class="p-4 font-bold text-gray-600">รูปแบบยา</th><th class="p-4 font-bold text-gray-600 text-center">จำนวนสูงสุด</th><th class="p-4 font-bold text-gray-600 text-center">จัดการ</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
+                <div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-200 sticky-header"><tr><th class="p-4 font-bold text-gray-600">รหัสยา</th><th class="p-4 font-bold text-gray-600">ชื่อสามัญ</th><th class="p-4 font-bold text-gray-600">ชื่อการค้า</th><th class="p-4 font-bold text-gray-600">รูปแบบยา</th><th class="p-4 font-bold text-gray-600 text-center">สถานะ</th><th class="p-4 font-bold text-gray-600 text-center">จำนวนสูงสุด</th><th class="p-4 font-bold text-gray-600 text-center">จัดการ</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
             </div>
         </div>
     </div>
@@ -82,6 +98,16 @@
                     <input type="text" id="tradeName" placeholder="ชื่อการค้า" class="mb-3 px-3 py-2 text-gray-700 bg-gray-100 rounded text-sm w-full">
                     <div class="mb-3"><label for="formSelect" class="block text-sm font-medium text-gray-700 text-left mb-1">รูปแบบยา</label><select id="formSelect" class="w-full px-3 py-2 text-gray-700 bg-gray-100 rounded text-sm" required></select></div>
                     <div id="newFormContainer" class="hidden mb-3"><input type="text" id="newFormInput" placeholder="ระบุรูปแบบยาใหม่..." class="w-full px-3 py-2 text-gray-700 bg-gray-100 rounded text-sm"></div>
+                    
+                    <!-- *** NEW: Status Dropdown *** -->
+                    <div class="mb-3">
+                        <label for="statusSelect" class="block text-sm font-medium text-gray-700 text-left mb-1">สถานะ</label>
+                        <select id="statusSelect" class="w-full px-3 py-2 text-gray-700 bg-gray-100 rounded text-sm" required>
+                            <option value="พร้อมใช้">พร้อมใช้</option>
+                            <option value="ยาขาดคราว">ยาขาดคราว</option>
+                        </select>
+                    </div>
+
                     <input type="number" id="max" placeholder="จำนวนสูงสุดที่สั่งได้" class="mb-3 px-3 py-2 text-gray-700 bg-gray-100 rounded text-sm w-full disabled:bg-gray-200" required>
                     <div class="flex items-center justify-end mb-4 -mt-1"><label for="unlimitedCheckbox" class="text-sm text-gray-700 mr-2">ไม่จำกัด</label><input type="checkbox" id="unlimitedCheckbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded"></div>
                     <div class="items-center px-4 py-3"><button id="saveBtn" type="submit" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600">บันทึก</button></div>
@@ -113,9 +139,6 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
 
-        // ===============================================================
-        // FIREBASE CONFIG HAS BEEN INSERTED
-        // ===============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyCOd7vpX_sDy6xsHZ-nEynIJX4MUpV46Sc",
             authDomain: "drug-app-11248.firebaseapp.com",
@@ -125,17 +148,13 @@
             appId: "1:172639155662:web:42922d0a5e7b031a19279f",
             measurementId: "G-Y11HJQ3TQ2"
         };
-        // ===============================================================
-
-        // --- Initialize Firebase ---
+        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // --- Collections References ---
         const medicinesCol = db.collection('medicines');
         const configCol = db.collection('config');
 
-        // --- Data State ---
         let medicineData = [];
         let drugForms = [];
         let ADMIN_PASSWORD = '';
@@ -143,8 +162,8 @@
 
         const defaultData = {
             medicines: [
-                { id: '670001', generic: 'Paracetamol', trade: 'Tylenol', form: 'เม็ด (Tablet)', max: 200 },
-                { id: '670002', generic: 'Ibuprofen', trade: 'Brufen', form: 'เม็ด (Tablet)', max: 150 },
+                { id: '670001', generic: 'Paracetamol', trade: 'Tylenol', form: 'เม็ด (Tablet)', max: 200, status: 'พร้อมใช้' },
+                { id: '670002', generic: 'Ibuprofen', trade: 'Brufen', form: 'เม็ด (Tablet)', max: 150, status: 'พร้อมใช้' },
             ],
             forms: [ 'เม็ด (Tablet)', 'แคปซูล (Capsule)', 'ยาพ่น (Inhaler)', 'ยาน้ำ (Syrup)', 'ยาฉีด (Injection)' ],
             password: 'admin1234'
@@ -156,6 +175,7 @@
         const adminPage = document.getElementById('admin-page');
         const publicTableBody = document.getElementById('publicTableBody');
         const publicSearchInput = document.getElementById('publicSearchInput');
+        const publicStatusFilter = document.getElementById('publicStatusFilter');
         const goToLoginBtn = document.getElementById('goToLoginBtn');
         const passwordInput = document.getElementById('passwordInput');
         const passwordError = document.getElementById('passwordError');
@@ -163,6 +183,7 @@
         const submitPasswordBtn = document.getElementById('submitPasswordBtn');
         const adminTableBody = document.getElementById('adminTableBody');
         const adminSearchInput = document.getElementById('adminSearchInput');
+        const adminStatusFilter = document.getElementById('adminStatusFilter');
         const addDrugBtn = document.getElementById('addDrugBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const changePasswordBtn = document.getElementById('changePasswordBtn');
@@ -175,6 +196,7 @@
         const formSelect = document.getElementById('formSelect');
         const newFormContainer = document.getElementById('newFormContainer');
         const newFormInput = document.getElementById('newFormInput');
+        const statusSelect = document.getElementById('statusSelect');
         const changePasswordModal = document.getElementById('changePasswordModal');
         const changePasswordForm = document.getElementById('changePasswordForm');
         const closeChangePasswordModalBtn = document.getElementById('closeChangePasswordModalBtn');
@@ -189,32 +211,65 @@
             document.getElementById(pageId).classList.remove('hidden');
         };
 
+        // --- *** NEW: Centralized Filtering and Sorting Logic *** ---
+        const getProcessedData = (filterElement, searchElement) => {
+            const statusFilter = filterElement.value;
+            const searchTerm = searchElement.value.toLowerCase().trim();
+
+            let processedData = [...medicineData];
+
+            // 1. Filter by status
+            if (statusFilter !== 'all') {
+                processedData = processedData.filter(med => med.status === statusFilter);
+            }
+
+            // 2. Filter by search term
+            if (searchTerm) {
+                processedData = processedData.filter(med => 
+                    med.generic.toLowerCase().includes(searchTerm) ||
+                    (med.trade && med.trade.toLowerCase().includes(searchTerm)) ||
+                    med.id.includes(searchTerm)
+                );
+            }
+
+            // 3. Sort the data
+            processedData.sort((a, b) => {
+                if (a.status === 'ยาขาดคราว' && b.status !== 'ยาขาดคราว') return -1;
+                if (b.status === 'ยาขาดคราว' && a.status !== 'ยาขาดคราว') return 1;
+                return a.generic.localeCompare(b.generic, 'th');
+            });
+
+            return processedData;
+        };
+
         const renderPublicTable = () => {
-            const searchTerm = publicSearchInput.value.toLowerCase().trim();
-            const filteredData = medicineData.filter(med => med.generic.toLowerCase().includes(searchTerm) || (med.trade && med.trade.toLowerCase().includes(searchTerm)) || med.id.includes(searchTerm));
+            const filteredData = getProcessedData(publicStatusFilter, publicSearchInput);
             publicTableBody.innerHTML = '';
-            filteredData.forEach(med => {
+            filteredData.forEach((med) => {
                 const row = document.createElement('tr');
-                row.className = 'bg-white border-b';
+                const isUnavailable = med.status === 'ยาขาดคราว';
+                row.className = `bg-white border-b ${isUnavailable ? 'bg-red-50' : ''}`;
                 const maxDisplay = med.max === null ? `<span class="text-green-600 font-bold">ไม่จำกัด</span>` : `<span class="font-bold text-red-600">${Number(med.max).toLocaleString()}</span>`;
-                row.innerHTML = `<td class="p-4 font-semibold">${med.generic}</td><td class="p-4">${med.trade || '-'}</td><td class="p-4">${med.form}</td><td class="p-4 text-center text-lg">${maxDisplay}</td>`;
+                const statusDisplay = isUnavailable ? `<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">${med.status}</span>` : `<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">${med.status}</span>`;
+                row.innerHTML = `<td class="p-4 font-semibold">${med.generic}</td><td class="p-4">${med.trade || '-'}</td><td class="p-4">${med.form}</td><td class="p-4 text-center">${statusDisplay}</td><td class="p-4 text-center text-lg">${maxDisplay}</td>`;
                 publicTableBody.appendChild(row);
             });
         };
 
         const renderAdminTable = () => {
-            const searchTerm = adminSearchInput.value.toLowerCase().trim();
-            const filteredData = medicineData.filter(med => med.generic.toLowerCase().includes(searchTerm) || (med.trade && med.trade.toLowerCase().includes(searchTerm)) || med.id.includes(searchTerm));
+            const filteredData = getProcessedData(adminStatusFilter, adminSearchInput);
             adminTableBody.innerHTML = '';
-            filteredData.forEach(med => {
+            filteredData.forEach((med) => {
                 const row = document.createElement('tr');
-                row.className = 'bg-white border-b';
+                const isUnavailable = med.status === 'ยาขาดคราว';
+                row.className = `bg-white border-b ${isUnavailable ? 'bg-red-50' : ''}`;
                 const maxDisplay = med.max === null ? `<span class="text-green-600 font-bold">ไม่จำกัด</span>` : `<span class="font-bold text-red-600">${Number(med.max).toLocaleString()}</span>`;
-                row.innerHTML = `<td class="p-4">${med.id}</td><td class="p-4 font-semibold">${med.generic}</td><td class="p-4">${med.trade || '-'}</td><td class="p-4">${med.form}</td><td class="p-4 text-center text-lg">${maxDisplay}</td><td class="p-4 text-center"><button class="edit-btn bg-yellow-400 hover:bg-yellow-500 text-white text-sm py-1 px-2 rounded" data-id="${med.id}">แก้ไข</button><button class="delete-btn bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-2 rounded ml-2" data-id="${med.id}">ลบ</button></td>`;
+                const statusDisplay = isUnavailable ? `<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">${med.status}</span>` : `<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">${med.status}</span>`;
+                row.innerHTML = `<td class="p-4">${med.id}</td><td class="p-4 font-semibold">${med.generic}</td><td class="p-4">${med.trade || '-'}</td><td class="p-4">${med.form}</td><td class="p-4 text-center">${statusDisplay}</td><td class="p-4 text-center text-lg">${maxDisplay}</td><td class="p-4 text-center"><button class="edit-btn bg-yellow-400 hover:bg-yellow-500 text-white text-sm py-1 px-2 rounded" data-id="${med.id}">แก้ไข</button><button class="delete-btn bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-2 rounded ml-2" data-id="${med.id}">ลบ</button></td>`;
                 adminTableBody.appendChild(row);
             });
         };
-
+        
         const populateFormDropdown = () => {
             formSelect.innerHTML = '';
             drugForms.forEach(form => {
@@ -244,6 +299,7 @@
                 if (drug) {
                     genericName.value = drug.generic;
                     tradeName.value = drug.trade;
+                    statusSelect.value = drug.status || 'พร้อมใช้';
                     if (drugForms.includes(drug.form)) {
                         formSelect.value = drug.form;
                     } else {
@@ -262,6 +318,8 @@
                         maxInput.value = drug.max;
                     }
                 }
+            } else {
+                statusSelect.value = 'พร้อมใช้'; // Default for new drug
             }
             drugModal.classList.remove('hidden');
         };
@@ -287,12 +345,13 @@
             }
             const isUnlimited = unlimitedCheckbox.checked;
             const max = isUnlimited ? null : parseInt(maxInput.value, 10);
+            const status = statusSelect.value;
             
             if (!generic || !formValue || (!isUnlimited && isNaN(max))) {
                 return alert("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
             }
 
-            const drugData = { generic, trade, form: formValue, max };
+            const drugData = { generic, trade, form: formValue, max, status };
 
             if (currentEditId) {
                 medicinesCol.doc(currentEditId).update(drugData).then(hideDrugModal);
@@ -365,6 +424,8 @@
             passwordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
             publicSearchInput.addEventListener('input', renderPublicTable);
             adminSearchInput.addEventListener('input', renderAdminTable);
+            publicStatusFilter.addEventListener('change', renderPublicTable);
+            adminStatusFilter.addEventListener('change', renderAdminTable);
             addDrugBtn.addEventListener('click', () => showDrugModal('add'));
             adminTableBody.addEventListener('click', handleAdminTableClick);
             changePasswordBtn.addEventListener('click', () => changePasswordModal.classList.remove('hidden'));
@@ -375,7 +436,7 @@
             closeChangePasswordModalBtn.addEventListener('click', hideChangePasswordModal);
             changePasswordForm.addEventListener('submit', handleChangePasswordSubmit);
 
-            medicinesCol.orderBy('id').onSnapshot(snapshot => {
+            medicinesCol.onSnapshot(snapshot => {
                 medicineData = snapshot.docs.map(doc => doc.data());
                 renderPublicTable();
                 renderAdminTable();
